@@ -2,6 +2,7 @@
   "permissions": {
     "defaultMode": "dontAsk",
     "additionalDirectories": [
+      "~/Library/Mobile Documents/com~apple~CloudDocs/業務委託/YUIIGIE/",
       "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/__OBSIDIAN_VAULT__/"
     ],
     "allow": [
