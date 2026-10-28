@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>jp.yuiigie.weekly-article</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>__RUN_WEEKLY_SH_PATH__</string>
+  </array>
+  <!-- 毎週木曜 8:59（Mac のタイムゾーンが Asia/Tokyo であること） -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>4</integer>
+    <key>Hour</key>
+    <integer>8</integer>
+    <key>Minute</key>
+    <integer>59</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/tmp/yuiigie-weekly.out</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/yuiigie-weekly.err</string>
+</dict>
+</plist>
