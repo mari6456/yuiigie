@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>AI目隠し</title>
+<style>
+  :root { --accent: #3da9c7; --ink: #1f2a30; --mute: #6b7a82; --line: #e3eaee; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; width: 300px; padding: 16px;
+    font: 14px/1.5 system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    color: var(--ink); background: #fff;
+  }
+  h1 { font-size: 16px; margin: 0 0 2px; }
+  .site { color: var(--mute); font-size: 12px; margin-bottom: 14px; }
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--line); gap: 8px; }
+  .row small { display: block; color: var(--mute); font-size: 11px; }
+  .main { font-weight: 700; font-size: 15px; border-top: none; }
+  .switch { position: relative; width: 42px; height: 24px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: #cfd8dc; border-radius: 999px; cursor: pointer; transition: .15s; }
+  .slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .15s; }
+  .switch input:checked + .slider { background: var(--accent); }
+  .switch input:checked + .slider::before { transform: translateX(18px); }
+  input[type=range] { width: 120px; accent-color: var(--accent); }
+  button {
+    width: 100%; margin-top: 8px; padding: 9px; border-radius: 8px; cursor: pointer;
+    font: inherit; font-weight: 600; border: 1px solid var(--accent); background: var(--accent); color: #fff;
+  }
+  button.ghost { background: #fff; color: var(--accent); }
+  button:disabled { opacity: .45; cursor: default; }
+  .note { margin-top: 12px; color: var(--mute); font-size: 11px; }
+  kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; font-size: 11px; }
+</style>
+</head>
+<body>
+  <h1 id="title">🙈 AI目隠し</h1>
+  <div class="site" id="site">—</div>
+
+  <label class="row main">目隠し ON
+    <span class="switch"><input type="checkbox" id="enabled"><span class="slider"></span></span>
+  </label>
+  <label class="row"><span>サイドバー<small>履歴・プロジェクト・アカウント名</small></span>
+    <span class="switch"><input type="checkbox" id="sidebar"><span class="slider"></span></span>
+  </label>
+  <label class="row"><span>ホーム・プロジェクト画面<small>入力欄以外の提案・一覧・プロジェクト名</small></span>
+    <span class="switch"><input type="checkbox" id="home"><span class="slider"></span></span>
+  </label>
+  <label class="row"><span>カーソルを合わせたら見える<small>合わせた1項目だけ表示</small></span>
+    <span class="switch"><input type="checkbox" id="peek"><span class="slider"></span></span>
+  </label>
+  <div class="row"><span>ぼかしの強さ</span><input type="range" id="blur" min="4" max="24" step="1"></div>
+
+  <button id="pick">＋ ぼかす場所を手動で追加</button>
+  <button id="clear" class="ghost">手動で追加した場所をリセット（<span id="count">0</span>）</button>
+
+  <div class="note">ショートカット <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> で ON/OFF。<br>今開いているチャットと入力欄はぼかされません。</div>
+<script src="popup.js"></script>
+</body>
+</html>

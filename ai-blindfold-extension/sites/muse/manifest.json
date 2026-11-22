@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "講座用 目隠し for Meta AI（Muse）",
+  "short_name": "Muse目隠し",
+  "version": "1.1.0",
+  "description": "講座・画面共有中に Meta AI（Muse）のサイドバー履歴・ホームの提案・プロジェクトをぼかします。今のチャットは見えたまま、カーソルを合わせると見えます。",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.meta.ai/*",
+    "https://meta.ai/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.meta.ai/*",
+        "https://meta.ai/*"
+      ],
+      "js": [
+        "site.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_title": "Muse目隠し",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "toggle-blindfold": {
+      "suggested_key": {
+        "default": "Alt+Shift+B"
+      },
+      "description": "目隠しの ON / OFF を切り替える"
+    }
+  }
+}
