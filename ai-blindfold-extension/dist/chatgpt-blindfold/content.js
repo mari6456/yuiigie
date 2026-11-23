@@ -28,13 +28,16 @@
   const PROJECT_PATH = SITE.projectPath || null;
 
   // 「チャット中」と判断するためのメッセージ要素
-  const MESSAGE_SELECTORS = [
-    "[data-message-author-role]",
-    "[data-testid^='conversation-turn']",
-    "[data-testid*='message']",
-    "[data-message-id]",
-    "article"
-  ].join(",");
+  const MESSAGE_SELECTORS = (
+    SITE.messageSelectors || [
+      "[data-message-author-role]",
+      "[data-testid^='conversation-turn']",
+      "[data-testid*='message']",
+      "[data-message-id]",
+      "article"
+    ]
+  ).join(",");
+  const HISTORY_LINKS = SITE.historyLinkSelectors ? SITE.historyLinkSelectors.join(",") : null;
 
   const COMPOSER_SELECTORS = [
     "#prompt-textarea",
@@ -53,7 +56,7 @@
   const BASIC =
     "a,button,[role=button],[role=link],[role=option],[role=menuitem],[role=row]," +
     "h1,h2,h3,h4,h5,h6,p,li,label,img,video,canvas,input,select,span";
-  const ITEMS = BASIC + ",div:not(:has(*))"; // 文字だけの div も項目扱い
+  const ITEMS = BASIC + ",:not(:has(*))"; // 中に要素がない（文字だけの）要素も項目扱い
   const Z = ZONES.map((c) => "." + c).join(",");
   // :has() は入れ子にできないので、ルールを分けて書く（1つが無効でも他は効くように）
   const selectors = [
@@ -117,6 +120,38 @@
     return true;
   }
 
+  // 画面左端に張り付いた縦長パネル（サイドバー）を探す
+  function isLeftPanel(el) {
+    const r = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    return (
+      r.left <= 8 &&
+      r.top <= 120 &&
+      r.height >= vh * 0.6 &&
+      r.width >= 48 &&
+      r.width <= Math.min(440, vw * 0.45)
+    );
+  }
+
+  function findLeftPanels(root) {
+    const found = new Set();
+    const vh = window.innerHeight;
+    for (const y of [0.25, 0.5, 0.75].map((f) => vh * f)) {
+      for (const x of [12, 40]) {
+        let el = document.elementFromPoint(x, y);
+        let best = null;
+        while (el && el !== document.body && el !== html) {
+          if (isLeftPanel(el)) best = el; // いちばん外側のパネルを採用
+          el = el.parentElement;
+        }
+        if (best && !isOurs(best) && !isProtected(best, root)) found.add(best);
+      }
+    }
+    // 入れ子になったものは外側だけ残す
+    return [...found].filter((el) => ![...found].some((o) => o !== el && o.contains(el)));
+  }
+
   function isProject() {
     return !!(PROJECT_PATH && PROJECT_PATH.test(location.pathname));
   }
@@ -164,6 +199,19 @@
         if (el.parentElement?.closest(".aib-zone-side")) return; // 親がぼかし済み
         if (!isProtected(el, root)) side.push(el);
       });
+      // 目印のないサイドバー：画面左端に縦長に張り付いているパネルを探す
+      if (SITE.sidebarByLayout) {
+        for (const el of findLeftPanels(root)) {
+          if (!side.some((s) => s.contains(el))) side.push(el);
+        }
+      }
+      // 会話へのリンク（＝履歴）はどこにあってもぼかす
+      if (HISTORY_LINKS) {
+        document.querySelectorAll(HISTORY_LINKS).forEach((a) => {
+          if (side.some((s) => s.contains(a))) return;
+          if (!isProtected(a, root)) side.push(a);
+        });
+      }
     }
     setClass("aib-zone-side", side);
 
@@ -409,7 +457,59 @@
     childStack.length = 0;
   }
 
+  // ---- 診断情報（画面の骨組みだけ。文字・チャット名は含めない）-----------
+  const maskPath = (p) => p.replace(/\/[^/]*\d[^/]*/g, "/:id").replace(/\/[A-Za-z0-9_-]{16,}/g, "/:id");
+
+  function diagnose() {
+    const composer = findComposer();
+    const root = composerRoot(composer);
+    let count = 0;
+    const desc = (el) => {
+      const r = el.getBoundingClientRect();
+      const o = { t: el.tagName.toLowerCase() };
+      if (looksStable(el.id)) o.id = el.id;
+      for (const a of ["role", "data-testid", "type", "contenteditable"]) {
+        const v = el.getAttribute(a);
+        if (v) o[a] = v.slice(0, 40);
+      }
+      if (el.tagName === "A") o.href = maskPath(el.getAttribute("href") || "");
+      const cls = [...el.classList].filter((c) => !c.startsWith("aib-")).slice(0, 3).join(" ");
+      if (cls) o.c = cls.slice(0, 60);
+      const z = ZONES.filter((c) => el.classList.contains(c)).join(" ");
+      if (z) o.zone = z;
+      o.r = [r.left, r.top, r.width, r.height].map(Math.round).join(",");
+      if (el === composer) o.COMPOSER = true;
+      if (el === root) o.COMPOSER_ROOT = true;
+      return o;
+    };
+    const walk = (el, depth) => {
+      if (count++ > 600 || depth > 14) return null;
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0 && !el.contains(composer)) return null;
+      const o = desc(el);
+      const kids = [...el.children]
+        .filter((c) => !SKIP_TAGS.includes(c.tagName) && c.tagName !== "svg" && c.tagName !== "path")
+        .map((c) => walk(c, depth + 1))
+        .filter(Boolean);
+      if (kids.length) o.k = kids;
+      return o;
+    };
+    return {
+      v: chrome.runtime.getManifest().version,
+      host,
+      path: maskPath(location.pathname),
+      vw: [window.innerWidth, window.innerHeight],
+      composer: composer ? desc(composer) : null,
+      home: isHomeState(),
+      convPath: CONVERSATION_PATH.test(location.pathname),
+      messages: document.querySelectorAll(MESSAGE_SELECTORS).length,
+      zones: ZONES.map((z) => z + ":" + document.querySelectorAll("." + z).length).join(" "),
+      tree: walk(document.body, 0)
+    };
+  }
+
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg?.type === "aib-diag") sendResponse(JSON.stringify(diagnose()));
     if (msg?.type === "aib-pick") startPicking();
     if (msg?.type === "aib-status") {
       sendResponse({

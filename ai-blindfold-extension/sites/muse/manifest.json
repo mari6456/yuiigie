@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "講座用 目隠し for Meta AI（Muse）",
   "short_name": "Muse目隠し",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "講座・画面共有中に Meta AI（Muse）のサイドバー履歴・ホームの提案・プロジェクトをぼかします。今のチャットは見えたまま、カーソルを合わせると見えます。",
   "permissions": [
     "storage"

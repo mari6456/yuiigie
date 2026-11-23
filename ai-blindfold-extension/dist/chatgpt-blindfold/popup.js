@@ -29,6 +29,7 @@ async function init() {
     $("site").textContent = `このページは対象外です（${name}の対象サイトで開いてください）`;
     $("pick").disabled = true;
     $("clear").disabled = true;
+    $("diag").disabled = true;
   }
   $("title").textContent = "🙈 " + chrome.runtime.getManifest().short_name;
 }
@@ -36,6 +37,17 @@ async function init() {
 $("pick").addEventListener("click", async () => {
   await chrome.tabs.sendMessage(tab.id, { type: "aib-pick" });
   window.close();
+});
+
+$("diag").addEventListener("click", async () => {
+  const btn = $("diag");
+  try {
+    const json = await chrome.tabs.sendMessage(tab.id, { type: "aib-diag" });
+    await navigator.clipboard.writeText(json);
+    btn.textContent = "コピーしました！チャットに貼り付けてください";
+  } catch (e) {
+    btn.textContent = "コピーできませんでした：" + (e?.message || e);
+  }
 });
 
 $("clear").addEventListener("click", async () => {
